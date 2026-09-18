@@ -1,0 +1,79 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:util="clr-namespace:FootageReviewer.App.Util"
+        x:Class="FootageReviewer.App.Views.LauncherWindow"
+        Width="920" Height="640" MinWidth="560" MinHeight="420"
+        Background="#0F0F14"
+        Icon="/Assets/icon.ico"
+        WindowStartupLocation="CenterScreen"
+        Title="Footage Reviewer">
+    <Grid RowDefinitions="Auto,Auto,*,Auto">
+
+        <!-- header -->
+        <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto,Auto" Margin="20,18,20,10">
+            <Image Grid.Column="0" Source="/Assets/icon.png" Width="40" Height="40"
+                   VerticalAlignment="Center" Margin="0,0,12,0"/>
+            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                <TextBlock Text="Footage Reviewer" Foreground="#FFFFFF" FontSize="22" FontWeight="SemiBold"/>
+                <TextBlock x:Name="SubHeader" Foreground="#7E7E8C" FontSize="12" Text="Pick a project to review"/>
+            </StackPanel>
+            <Button Grid.Column="2" x:Name="NewProjectBtn" Content="New project" Focusable="False"
+                    Margin="0,0,8,0" Padding="14,8"/>
+            <Button Grid.Column="3" x:Name="OpenProjectBtn" Content="Open project…" Focusable="False"
+                    Padding="14,8" Background="#274050" Foreground="#FFFFFF"/>
+        </Grid>
+
+        <!-- filter -->
+        <TextBox Grid.Row="1" x:Name="FilterBox" Margin="20,0,20,10" Height="30" Padding="8,4"
+                 FontSize="12" VerticalContentAlignment="Center" Watermark="Filter projects…"/>
+
+        <!-- project list -->
+        <ScrollViewer Grid.Row="2" Margin="12,0,12,0">
+            <StackPanel>
+                <ItemsControl x:Name="ProjectList">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="util:ProjectCard">
+                            <Border Classes="card" Margin="8,4" Padding="10" CornerRadius="6"
+                                    Background="#15151B" BorderBrush="#26262F" BorderThickness="1"
+                                    PointerPressed="OnProjectClick" Tag="{Binding Path}">
+                                <Grid ColumnDefinitions="Auto,*,Auto">
+                                    <Border Grid.Column="0" Width="132" Height="74" CornerRadius="4"
+                                            Background="#0B0B10" ClipToBounds="True" Margin="0,0,12,0">
+                                        <Panel>
+                                            <TextBlock Text="🎞" FontSize="24" Foreground="#3A3A46"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            <Image Source="{Binding Thumbnail}" Stretch="UniformToFill"/>
+                                        </Panel>
+                                    </Border>
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="3">
+                                        <TextBlock Text="{Binding Name}" Foreground="#FFFFFF" FontSize="15"
+                                                   FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                                        <TextBlock Text="{Binding StatsText}" Foreground="#BFD2F2" FontSize="11"/>
+                                        <TextBlock Text="{Binding SubtitleText}" Foreground="#7E7E8C" FontSize="11"/>
+                                        <TextBlock Text="{Binding Folder}" Foreground="#5A5A66" FontSize="10"
+                                                   TextTrimming="CharacterEllipsis"/>
+                                    </StackPanel>
+                                    <Border Grid.Column="2" VerticalAlignment="Center" IsVisible="{Binding !Reachable}"
+                                            Background="#3A2020" CornerRadius="3" Padding="8,4">
+                                        <TextBlock Text="offline" Foreground="#FF9A9A" FontSize="10"/>
+                                    </Border>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <TextBlock x:Name="EmptyHint" Margin="20,40" HorizontalAlignment="Center"
+                           Foreground="#5A5A66" FontSize="13" TextAlignment="Center" IsVisible="False"
+                           Text="No projects yet.&#10;Use “New project” to start one, or “Open project…” to find an existing .frproj."/>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- footer -->
+        <Grid Grid.Row="3" ColumnDefinitions="*,Auto" Margin="20,10,20,16">
+            <CheckBox Grid.Column="0" x:Name="AutoOpenChk" Foreground="#9A9AA8" FontSize="12"
+                      Content="Skip this screen and reopen my last project on launch"/>
+            <TextBlock Grid.Column="1" x:Name="StatusText" Foreground="#5A5A66" FontSize="11"
+                       VerticalAlignment="Center"/>
+        </Grid>
+    </Grid>
+</Window>

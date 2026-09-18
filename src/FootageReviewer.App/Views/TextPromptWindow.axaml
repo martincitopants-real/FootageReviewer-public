@@ -1,0 +1,15 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="FootageReviewer.App.Views.TextPromptWindow"
+        Width="420" Height="150" CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        Background="#16161D" Title="Rename">
+    <StackPanel Margin="16" Spacing="10">
+        <TextBlock x:Name="PromptText" Foreground="#E2E2EA" FontSize="13" Text="Name"/>
+        <TextBox x:Name="ValueBox" Background="#101018" Foreground="#FFFFFF" BorderBrush="#3A3A46"/>
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+            <Button x:Name="CancelBtn" Content="Cancel" MinWidth="80"/>
+            <Button x:Name="OkBtn" Content="OK" MinWidth="80" Background="#274050" Foreground="White"/>
+        </StackPanel>
+    </StackPanel>
+</Window>

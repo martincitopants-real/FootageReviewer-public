@@ -1,0 +1,7 @@
+{
+  "python": "/path/to/FootageReviewer/native/whisper/.venv/bin/python3",
+  "script": "transcribe_mlx.py",
+  "model": "mlx-community/parakeet-tdt-0.6b-v3",
+  "device": "gpu",
+  "compute": "int8"
+}

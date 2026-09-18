@@ -1,0 +1,158 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:util="clr-namespace:FootageReviewer.App.Util"
+        x:Class="FootageReviewer.App.Views.SettingsWindow"
+        Width="540" Height="660"
+        Background="#0F0F14"
+        WindowStartupLocation="CenterOwner"
+        CanResize="False"
+        Title="Settings">
+    <Grid RowDefinitions="Auto,*,Auto" Margin="16">
+        <TextBlock Grid.Row="0" Text="Settings" Foreground="#FFFFFF" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,12"/>
+
+        <ScrollViewer Grid.Row="1">
+            <StackPanel Spacing="14">
+
+                <Border Background="#15151B" CornerRadius="4" Padding="14">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Auto-save" Foreground="#BFD2F2" FontWeight="SemiBold" FontSize="13"/>
+                        <CheckBox x:Name="AutoSaveCheck" Content="Auto-save project periodically" Foreground="#E2E2EA"/>
+                        <Grid ColumnDefinitions="Auto,*,Auto" Margin="0,4,0,0">
+                            <TextBlock Grid.Column="0" Text="Interval (seconds):" Foreground="#9A9AA8" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <NumericUpDown x:Name="IntervalInput" Grid.Column="1" Minimum="15" Maximum="3600" Increment="15" Value="60" HorizontalAlignment="Left" Width="120"/>
+                        </Grid>
+                        <CheckBox x:Name="ConfirmCloseCheck" Content="Ask before closing if there are unsaved changes" Foreground="#E2E2EA" Margin="0,4,0,0"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Background="#15151B" CornerRadius="4" Padding="14">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Playback" Foreground="#BFD2F2" FontWeight="SemiBold" FontSize="13"/>
+                        <Grid ColumnDefinitions="Auto,*,Auto">
+                            <TextBlock Grid.Column="0" Text="Skip distance (seconds):" Foreground="#9A9AA8"
+                                       VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <NumericUpDown x:Name="SkipSecondsInput" Grid.Column="1" Minimum="0.25" Maximum="120"
+                                           Increment="0.5" Value="5" FormatString="0.##"
+                                           HorizontalAlignment="Left" Width="120"/>
+                        </Grid>
+                        <TextBlock Foreground="#7E7E8C" FontSize="11"
+                                   Text="How far the ← / → arrows and the transport skip buttons jump."/>
+                        <CheckBox x:Name="ScaleSkipCheck" Content="Scale skip distance by playback speed (2× → 2× skip)"
+                                  Foreground="#E2E2EA" Margin="0,4,0,0"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Background="#15151B" CornerRadius="4" Padding="14">
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="Keyboard shortcuts" Foreground="#BFD2F2" FontWeight="SemiBold" FontSize="13"/>
+                        <ItemsControl x:Name="ShortcutsList">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="util:KeyboardShortcut">
+                                    <Grid ColumnDefinitions="150,*" Margin="0,1">
+                                        <TextBlock Grid.Column="0" Text="{Binding Keys}" Foreground="#8CE6A0" FontFamily="Consolas" TextWrapping="Wrap" Margin="0,0,8,0"/>
+                                        <TextBlock Grid.Column="1" Text="{Binding Description}" Foreground="#E2E2EA" TextWrapping="Wrap"/>
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+
+                <Border Background="#15151B" CornerRadius="4" Padding="14">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Logs" Foreground="#BFD2F2" FontWeight="SemiBold" FontSize="13"/>
+                        <TextBlock Foreground="#7E7E8C" FontSize="11" Text="Copy options mirror the ⋮ menu in the Logs tab."/>
+                        <CheckBox x:Name="CfgCopyOnlyNew" Content="Copy all → only un-struck (new) entries" Foreground="#E2E2EA"/>
+                        <CheckBox x:Name="CfgCopyHeaders" Content="Include clip / folder headers" Foreground="#E2E2EA"/>
+                        <CheckBox x:Name="CfgCopyTimestamps" Content="Include timestamps" Foreground="#E2E2EA"/>
+                        <CheckBox x:Name="CfgCopyDayHeadings" Content="Include day headings" Foreground="#E2E2EA"/>
+                        <CheckBox x:Name="CfgWarnOutOfOrder" Foreground="#E2E2EA" Margin="0,8,0,0"
+                                  Content="Warn before moving a clip puts footage out of order"/>
+                        <Grid ColumnDefinitions="Auto,*,Auto" Margin="0,4,0,0">
+                            <TextBlock Grid.Column="0" Text="Merge entries within (seconds):" Foreground="#9A9AA8" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <NumericUpDown x:Name="MergeWindowInput" Grid.Column="1" Minimum="0" Maximum="60" Increment="1" Value="5" FormatString="0.##" HorizontalAlignment="Left" Width="120"/>
+                        </Grid>
+                        <TextBlock Foreground="#7E7E8C" FontSize="10" TextWrapping="Wrap"
+                                   Text="A new log within this many seconds of an existing one merges into it (0 = never merge)."/>
+                        <Border Height="1" Background="#26262F" Margin="0,4"/>
+                        <CheckBox x:Name="AutoCorrectCheck" Content="Autocorrect common typos as you type" Foreground="#E2E2EA"
+                                  ToolTip.Tip="Fixes a curated list of common misspellings on space/punctuation. One backspace undoes the last fix."/>
+                        <CheckBox x:Name="AutoCapitalizeCheck" Content="Capitalize the first word of sentences" Foreground="#E2E2EA"
+                                  ToolTip.Tip="Capitalizes the first letter of each sentence as you type. Backspace undoes it."/>
+                        <CheckBox x:Name="SpellCheckCheck" Content="Spell check (red underline) in the log box" Foreground="#E2E2EA"
+                                  ToolTip.Tip="Underlines misspelled words. Right-click one for suggestions or to add it to your dictionary."/>
+                        <Border Height="1" Background="#26262F" Margin="0,4"/>
+                        <TextBlock Text="Dictation" Foreground="#BFD2F2" FontWeight="SemiBold" FontSize="12"/>
+                        <Grid ColumnDefinitions="Auto,*" Margin="0,2,0,0">
+                            <TextBlock Grid.Column="0" Text="Microphone:" Foreground="#9A9AA8" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <ComboBox x:Name="MicCombo" Grid.Column="1" HorizontalAlignment="Stretch"/>
+                        </Grid>
+                        <TextBlock Foreground="#7E7E8C" FontSize="10" TextWrapping="Wrap"
+                                   Text="Hotkey D records the mic, then transcribes it into a log in the background."/>
+                    </StackPanel>
+                </Border>
+
+                <Border Background="#15151B" CornerRadius="4" Padding="14">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Media locations" Foreground="#BFD2F2" FontWeight="SemiBold" FontSize="13"/>
+                        <TextBlock Foreground="#9A9AA8" FontSize="11" TextWrapping="Wrap"
+                                   Text="Where footage that a project refers to by another machine's path lives on this one. Learned automatically when you relink; never written into the project."/>
+                        <StackPanel x:Name="MediaLocationsPanel" Spacing="4"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Background="#15151B" CornerRadius="4" Padding="14">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Transcript" Foreground="#BFD2F2" FontWeight="SemiBold" FontSize="13"/>
+                        <CheckBox x:Name="TranscribeOnLoadCheck" Content="Auto-generate transcript when footage is loaded" Foreground="#E2E2EA"/>
+                        <Grid ColumnDefinitions="Auto,*,Auto" Margin="0,4,0,0">
+                            <TextBlock Grid.Column="0" Text="Bubble font size:" Foreground="#9A9AA8" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <NumericUpDown x:Name="TranscriptFontInput" Grid.Column="1" Minimum="8" Maximum="28" Increment="1" Value="11" HorizontalAlignment="Left" Width="120"/>
+                        </Grid>
+                        <Grid ColumnDefinitions="Auto,*,Auto" Margin="0,4,0,0">
+                            <TextBlock Grid.Column="0" Text="Auto-level max peak:" Foreground="#9A9AA8" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <NumericUpDown x:Name="AutoLevelMaxInput" Grid.Column="1" Minimum="0.4" Maximum="1.0" Increment="0.05" Value="0.9" FormatString="0.00" HorizontalAlignment="Left" Width="120"/>
+                        </Grid>
+                        <TextBlock Foreground="#7E7E8C" FontSize="11" TextWrapping="Wrap" Margin="0,4,0,0"
+                                   Text="Copy bubble → log: clicking ⧉ on a bubble quotes its text, drops it in the log box, and focuses it. Add a speaker prefix per track:"/>
+                        <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto">
+                            <CheckBox x:Name="Track2PrefixCheck" Grid.Row="0" Grid.Column="0" Content="Track 2 prefix" Foreground="#E2E2EA" VerticalAlignment="Center" Margin="0,0,8,4"/>
+                            <TextBox x:Name="Track2PrefixInput" Grid.Row="0" Grid.Column="1" Watermark="Me:" Width="160" HorizontalAlignment="Left" Margin="0,0,0,4"/>
+                            <CheckBox x:Name="Track3PrefixCheck" Grid.Row="1" Grid.Column="0" Content="Track 3 prefix" Foreground="#E2E2EA" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <TextBox x:Name="Track3PrefixInput" Grid.Row="1" Grid.Column="1" Watermark="Chatter:" Width="160" HorizontalAlignment="Left"/>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <Border Background="#15151B" CornerRadius="4" Padding="14">
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="Startup" Foreground="#BFD2F2" FontWeight="SemiBold" FontSize="13"/>
+                        <CheckBox x:Name="OpenLastProjectCheck" Content="Reopen the last project automatically on launch" Foreground="#E2E2EA"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Background="#15151B" CornerRadius="4" Padding="14">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Cache &amp; assets" Foreground="#BFD2F2" FontWeight="SemiBold" FontSize="13"/>
+                        <TextBlock Foreground="#7E7E8C" FontSize="11" TextWrapping="Wrap"
+                                   Text="Delete the cached filmstrips / waveforms for the loaded footage and rebuild them from the video files. Closes Settings and shows progress on the toolbar."/>
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Button x:Name="RegenThumbsBtn" Content="Regenerate thumbnails"
+                                    ToolTip.Tip="Re-extract every clip's filmstrip from the video."/>
+                            <Button x:Name="RegenWavesBtn" Content="Regenerate waveforms"
+                                    ToolTip.Tip="Re-extract every clip's audio waveforms from the video."/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <TextBlock Foreground="#7E7E8C" FontSize="11" TextWrapping="Wrap"
+                           Text="Settings are stored at %LOCALAPPDATA%\FootageReviewer\settings.json."/>
+            </StackPanel>
+        </ScrollViewer>
+
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8" Margin="0,12,0,0">
+            <Button x:Name="CancelBtn" Content="Cancel" Focusable="False"/>
+            <Button x:Name="SaveBtn" Content="Save" Focusable="False" Background="#274050" Foreground="#FFFFFF"/>
+        </StackPanel>
+    </Grid>
+</Window>

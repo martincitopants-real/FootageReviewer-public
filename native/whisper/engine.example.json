@@ -1,0 +1,7 @@
+{
+  "python": "C:/Path/To/python.exe",
+  "script": "transcribe.py",
+  "model": "distil-large-v3",
+  "device": "cuda",
+  "compute": "float16"
+}

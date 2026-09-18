@@ -1,0 +1,107 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="FootageReviewer.App.App"
+             xmlns:local="using:FootageReviewer.App"
+             Name="FootageReviewer"
+             RequestedThemeVariant="Dark">
+    <!-- Name is what macOS shows as the application menu title, beside the Apple menu, and in its
+         "Hide <app>" / "Quit <app>" items. Without it Avalonia's default, "Avalonia Application",
+         is used. -->
+             <!-- Dark variant → native dark Windows title bar + dark default controls, matching the app. -->
+
+    <Application.DataTemplates>
+        <local:ViewLocator/>
+    </Application.DataTemplates>
+  
+    <Application.Resources>
+        <!-- Recolor sliders app-wide to the app's teal accent for a more professional, consistent look. -->
+        <SolidColorBrush x:Key="SliderTrackValueFill" Color="#3DD6E0"/>
+        <SolidColorBrush x:Key="SliderTrackValueFillPointerOver" Color="#5FE3EC"/>
+        <SolidColorBrush x:Key="SliderTrackValueFillPressed" Color="#5FE3EC"/>
+        <SolidColorBrush x:Key="SliderTrackValueFillDisabled" Color="#3A6A6E"/>
+        <SolidColorBrush x:Key="SliderTrackFill" Color="#2A2A36"/>
+        <SolidColorBrush x:Key="SliderTrackFillPointerOver" Color="#33333F"/>
+        <SolidColorBrush x:Key="SliderTrackFillPressed" Color="#33333F"/>
+        <SolidColorBrush x:Key="SliderThumbBackground" Color="#EDEDF2"/>
+        <SolidColorBrush x:Key="SliderThumbBackgroundPointerOver" Color="#FFFFFF"/>
+        <SolidColorBrush x:Key="SliderThumbBackgroundPressed" Color="#FFFFFF"/>
+
+        <!-- Shrink the Slider thumb (Fluent default is 20px). The Fluent template sets the Thumb's
+             Width/Height DIRECTLY on the element (Template priority), so a "Slider /template/ Thumb"
+             Width setter (Style priority) is ignored — that's why earlier attempts had no effect. The
+             template reads these size keys via DynamicResource, the same mechanism as the brushes above. -->
+        <x:Double x:Key="SliderHorizontalThumbWidth">11</x:Double>
+        <x:Double x:Key="SliderHorizontalThumbHeight">11</x:Double>
+        <x:Double x:Key="SliderVerticalThumbWidth">11</x:Double>
+        <x:Double x:Key="SliderVerticalThumbHeight">11</x:Double>
+        <CornerRadius x:Key="SliderThumbCornerRadius">6</CornerRadius>
+    </Application.Resources>
+
+    <Application.Styles>
+        <FluentTheme />
+
+        <!-- Slimmer sliders. Thumb size is controlled by the Slider*ThumbWidth/Height resource keys
+             above (a /template/ Thumb size setter is overridden by the Fluent template and does nothing). -->
+        <Style Selector="Slider:horizontal">
+            <Setter Property="MinHeight" Value="22"/>
+        </Style>
+
+        <!-- Consistent tab-header buttons: square icon buttons + uniform-height text buttons. -->
+        <Style Selector="Button.hdrIcon, ToggleButton.hdrIcon">
+            <Setter Property="Width" Value="30"/>
+            <Setter Property="Height" Value="28"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+        <Style Selector="Button.hdrText, ToggleButton.hdrText">
+            <Setter Property="Height" Value="28"/>
+            <Setter Property="Padding" Value="10,0"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+
+        <!-- Small flat buttons that sit inside a search TextBox (prev/next/clear). -->
+        <Style Selector="Button.searchBtn">
+            <Setter Property="Width" Value="20"/>
+            <Setter Property="Height" Value="22"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Foreground" Value="#9A9AA8"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+        <Style Selector="Button.searchBtn:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#2A2A36"/>
+            <Setter Property="Foreground" Value="#E2E2EA"/>
+        </Style>
+
+        <!-- Mic / dictation toggle: red while recording. -->
+        <Style Selector="ToggleButton.mic:checked /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#E0405A"/>
+            <Setter Property="Foreground" Value="#FFFFFF"/>
+        </Style>
+
+        <!-- Per-track M / S / A toggles: bold, centered, colour-coded when active. -->
+        <Style Selector="ToggleButton.trackToggle">
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+        <Style Selector="ToggleButton.mute:checked /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#2E9E4B"/>
+            <Setter Property="Foreground" Value="#08120A"/>
+        </Style>
+        <Style Selector="ToggleButton.solo:checked /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#E0C341"/>
+            <Setter Property="Foreground" Value="#1A1605"/>
+        </Style>
+        <Style Selector="ToggleButton.autolvl:checked /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#3F6FD6"/>
+            <Setter Property="Foreground" Value="#F0F4FF"/>
+        </Style>
+    </Application.Styles>
+</Application>

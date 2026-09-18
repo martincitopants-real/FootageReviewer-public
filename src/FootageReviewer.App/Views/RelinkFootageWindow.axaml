@@ -1,0 +1,29 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="FootageReviewer.App.Views.RelinkFootageWindow"
+        Width="620" SizeToContent="Height" MaxHeight="560"
+        Background="#0F0F14"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        Title="Footage not found">
+    <Grid RowDefinitions="Auto,Auto,*,Auto,Auto" Margin="16">
+        <TextBlock Grid.Row="0" x:Name="HeadlineText" Text="Some footage can't be found"
+                   Foreground="#FFFFFF" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,8"/>
+        <TextBlock Grid.Row="1" x:Name="SummaryText" Foreground="#9A9AA8" FontSize="12"
+                   TextWrapping="Wrap" Margin="0,0,0,10"/>
+        <Border Grid.Row="2" Background="#15151B" CornerRadius="4" Padding="10" MaxHeight="240">
+            <ScrollViewer>
+                <TextBlock x:Name="MissingList" Foreground="#C8C8D4" FontSize="11"
+                           FontFamily="Consolas,monospace" TextWrapping="NoWrap"/>
+            </ScrollViewer>
+        </Border>
+        <TextBlock Grid.Row="3" x:Name="HintText" Foreground="#7E7E8C" FontSize="11"
+                   TextWrapping="Wrap" Margin="0,10,0,0"/>
+        <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8" Margin="0,14,0,0">
+            <Button x:Name="OpenAnywayBtn" Content="Open anyway" Focusable="False"/>
+            <Button x:Name="RemoveBtn" Content="Remove missing clips" Focusable="False"/>
+            <Button x:Name="LocateBtn" Content="Locate folder…" Focusable="False"
+                    Background="#274050" Foreground="#FFFFFF"/>
+        </StackPanel>
+    </Grid>
+</Window>

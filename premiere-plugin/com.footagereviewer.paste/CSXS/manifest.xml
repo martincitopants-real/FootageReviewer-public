@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  FootageReviewer → Premiere bridge (CEP panel).
+
+  CEP (not UXP) on purpose: as of Premiere 2025 the UXP API still has no way to add a clip to a sequence,
+  while CEP/ExtendScript has had Track.overwriteClip()/insertClip() for years. That's the only supported
+  route for "put this footage on my timeline at the playhead" from an outside app.
+-->
+<ExtensionManifest Version="7.0" ExtensionBundleId="com.footagereviewer.paste"
+                   ExtensionBundleVersion="1.0.0"
+                   ExtensionBundleName="FootageReviewer Paste"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <ExtensionList>
+    <Extension Id="com.footagereviewer.paste.panel" Version="1.0.0"/>
+  </ExtensionList>
+  <ExecutionEnvironment>
+    <HostList>
+      <!-- Premiere Pro. Wide range so it loads on 2023 → 2025+. -->
+      <Host Name="PPRO" Version="[13.0,99.9]"/>
+    </HostList>
+    <LocaleList><Locale Code="All"/></LocaleList>
+    <RequiredRuntimeList>
+      <RequiredRuntime Name="CSXS" Version="6.0"/>
+    </RequiredRuntimeList>
+  </ExecutionEnvironment>
+  <DispatchInfoList>
+    <Extension Id="com.footagereviewer.paste.panel">
+      <DispatchInfo>
+        <Resources>
+          <MainPath>./index.html</MainPath>
+          <ScriptPath>./jsx/host.jsx</ScriptPath>
+          <CEFCommandLine/>
+        </Resources>
+        <Lifecycle><AutoVisible>true</AutoVisible></Lifecycle>
+        <UI>
+          <Type>Panel</Type>
+          <Menu>FootageReviewer Paste</Menu>
+          <Geometry>
+            <Size><Height>190</Height><Width>320</Width></Size>
+            <MinSize><Height>140</Height><Width>240</Width></MinSize>
+          </Geometry>
+        </UI>
+      </DispatchInfo>
+    </Extension>
+  </DispatchInfoList>
+</ExtensionManifest>

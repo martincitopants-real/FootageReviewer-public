@@ -1,0 +1,446 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:mpv="clr-namespace:HanumanInstitute.LibMpv.Avalonia;assembly=HanumanInstitute.LibMpv.Avalonia"
+        xmlns:ctrl="clr-namespace:FootageReviewer.App.Controls"
+        xmlns:models="clr-namespace:FootageReviewer.App.Models"
+        x:Class="FootageReviewer.App.Views.MainWindow"
+        Width="1500" Height="900"
+        WindowStartupLocation="CenterScreen" WindowState="Maximized"
+        Background="#0F0F14"
+        Icon="/Assets/icon.ico"
+        Title="Footage Reviewer">
+
+    <Grid RowDefinitions="Auto,*,Auto,Auto">
+
+        <!-- Toolbar -->
+        <DockPanel x:Name="Toolbar" Grid.Row="0" Background="#16161D">
+            <Menu DockPanel.Dock="Left" VerticalAlignment="Center" Margin="4,2,0,2">
+                <MenuItem Header="File">
+                    <MenuItem x:Name="MenuOpenFootage" Header="Open footage…"/>
+                    <MenuItem x:Name="MenuOpenFolder" Header="Open folder…"/>
+                    <Separator/>
+                    <MenuItem x:Name="MenuNewProject" Header="New project"
+                              ToolTip.Tip="Clear all clips, logs, transcripts, and offsets — start from a clean slate."/>
+                    <MenuItem x:Name="MenuOpenProject" Header="Open project"/>
+                    <MenuItem x:Name="MenuHome" Header="Home (project list)"
+                              ToolTip.Tip="Close this project and go back to the project list."/>
+                    <MenuItem x:Name="MenuOpenRecent" Header="Open recent">
+                        <MenuItem Header="(loading…)" IsEnabled="False"/>
+                    </MenuItem>
+                    <Separator/>
+                    <MenuItem x:Name="MenuSaveProject" Header="Save project" InputGesture="Ctrl+S"/>
+                    <MenuItem x:Name="MenuSaveAs" Header="Save as…"/>
+                    <MenuItem x:Name="MenuRenameProject" Header="Rename project…"
+                              ToolTip.Tip="Rename the .frproj file on disk (and its backups folder)."/>
+                </MenuItem>
+                <MenuItem x:Name="MenuSettings" Header="Settings"
+                          ToolTip.Tip="Auto-save, keybinds, transcript + copy options, auto-level"/>
+            </Menu>
+            <TextBlock x:Name="VersionLabel" DockPanel.Dock="Right" VerticalAlignment="Center"
+                       Margin="0,0,12,0" Foreground="#5A5A66" FontSize="11" Text=""/>
+            <Border DockPanel.Dock="Right" Width="1" Background="#26262F" Margin="6,8"/>
+            <TextBlock x:Name="SaveStatus" DockPanel.Dock="Right" VerticalAlignment="Center"
+                       Margin="0,0,10,0" Foreground="#7E7E8C" FontSize="11" Text=""/>
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0">
+                <TextBlock x:Name="ExtractLabel" VerticalAlignment="Center" Margin="0,0,8,0"
+                           Foreground="#9A9AA8" FontSize="11" IsVisible="False"/>
+                <ProgressBar x:Name="ExtractProgress" Width="200" Height="6" Minimum="0" Maximum="1"
+                             IsVisible="False" VerticalAlignment="Center"/>
+            </StackPanel>
+            <TextBlock x:Name="ClipInfo" DockPanel.Dock="Left" VerticalAlignment="Center"
+                       Margin="14,0" Foreground="#9A9AA8" Text="No footage loaded"/>
+        </DockPanel>
+
+        <!-- Preview (video) | side panel. The video column auto-sizes to maintain a 16:9 aspect at
+             the current row height; the side panel eats every spare pixel. Dragging the splitter
+             switches to manual sizing. -->
+        <Grid Grid.Row="1" x:Name="PreviewRow" ColumnDefinitions="640,10,*">
+            <Panel Grid.Column="0" x:Name="VideoPanel" Background="#000000" MinWidth="320">
+                <!-- NativeView embeds mpv in a child native window — a Win32-only path that renders nothing on
+                     macOS. OpenGlView composites mpv through Avalonia's GL surface and is the portable
+                     renderer (hence the AngleEgl backend selected for Windows in Program.cs). -->
+                <ctrl:MpvVideoView x:Name="Video"/>
+            </Panel>
+
+            <GridSplitter Grid.Column="1" x:Name="VideoSplitter" Background="#3A3A46" ResizeDirection="Columns"
+                          ResizeBehavior="PreviousAndNext" ZIndex="10"
+                          HorizontalAlignment="Stretch" ToolTip.Tip="Drag to resize the video vs. the tabs"/>
+
+            <Grid Grid.Column="2" Background="#15151B" ColumnDefinitions="*,5,*">
+
+                <!-- drag to resize the Manual Log vs Auto Transcript split -->
+                <GridSplitter Grid.Column="1" Background="#26262F" ResizeDirection="Columns"
+                              HorizontalAlignment="Stretch"/>
+
+                <!-- Manual log column -->
+                <DockPanel Grid.Column="0">
+                    <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto,Auto,Auto,Auto" Margin="10,10,8,4">
+                        <TextBlock x:Name="LogsHeader" Text="Logs" Foreground="#FFFFFF" FontWeight="SemiBold"
+                                   FontSize="14" VerticalAlignment="Center"/>
+                        <ToggleButton x:Name="AutoPauseBtn" Grid.Column="1" Classes="hdrText" Content="⏸ Auto-pause" Focusable="False"
+                                      Margin="0,0,6,0"
+                                      ToolTip.Tip="When on, playback pauses the moment you start typing a log entry, so you don't miss footage while writing."/>
+                        <ToggleButton x:Name="LogCenterLockBtn" Grid.Column="2" Classes="hdrIcon" Content="🎯" Focusable="False"
+                                      Margin="0,0,6,0"
+                                      ToolTip.Tip="Lock the log playhead to the centre — the list auto-scrolls so the current point stays in the middle (same centre used when a new log is added)."/>
+                        <Button x:Name="CopyAllBtn" Grid.Column="3" Classes="hdrText" Content="Copy all" Focusable="False" Margin="0,0,6,0"/>
+                        <Button x:Name="LogMenuBtn" Grid.Column="4" Classes="hdrIcon" Content="⋮" Focusable="False"
+                                ToolTip.Tip="Copy options">
+                            <Button.Flyout>
+                                <Flyout Placement="BottomEdgeAlignedRight">
+                                    <ScrollViewer MaxHeight="560">
+                                    <StackPanel Spacing="8" Width="290">
+                                        <TextBlock Text="Copy all options" Foreground="#BFD2F2" FontWeight="SemiBold" FontSize="12"/>
+                                        <CheckBox x:Name="CopyOnlyNewChk" Content="Copy only un-struck (new) entries"
+                                                  ToolTip.Tip="Copy all skips entries already marked copied, then marks the new ones."/>
+                                        <CheckBox x:Name="CopyHeadersChk" Content="Include clip / folder headers"/>
+                                        <CheckBox x:Name="CopyDayHeadingsChk" Content="Include day headings"/>
+                                        <CheckBox x:Name="CopyTimestampsChk" Content="Include timestamps"/>
+                                        <TextBlock Text="With headers off, entries are copied flat (no indentation)."
+                                                   Foreground="#7E7E8C" FontSize="10" TextWrapping="Wrap"/>
+                                        <Border Height="1" Background="#26262F" Margin="0,2"/>
+                                        <Button x:Name="MarkAllCopiedBtn" Content="Mark all as copied" HorizontalAlignment="Stretch"/>
+                                        <Button x:Name="ClearCopiedBtn" Content="Clear all copied marks" HorizontalAlignment="Stretch"/>
+                                        <Border Height="1" Background="#26262F" Margin="0,2"/>
+                                        <Button x:Name="ImportLogsBtn" Content="Import logs from text…" HorizontalAlignment="Stretch"
+                                                ToolTip.Tip="Paste a block of timestamped log lines (e.g. '54:17:49&#x9;text' or '8:00 text') to add them as logs."/>
+                                        <Border Height="1" Background="#26262F" Margin="0,2"/>
+                                        <!-- logging preferences -->
+                                        <TextBlock Text="Logging" Foreground="#BFD2F2" FontWeight="SemiBold" FontSize="12"/>
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <TextBlock Grid.Column="0" Text="New-log offset (sec)" Foreground="#E2E2EA" VerticalAlignment="Center"
+                                                       ToolTip.Tip="Shift each new manual log's time by this many seconds (e.g. -1 logs it 1s before you pressed log). NOT applied to text copied from the transcript."/>
+                                            <NumericUpDown x:Name="NewLogOffsetInput" Grid.Column="1" Minimum="-30" Maximum="30" Increment="0.5"
+                                                           Value="0" FormatString="0.##" Width="100"/>
+                                        </Grid>
+                                        <CheckBox x:Name="ClickLogSnapsChk" Content="Click a log snaps the timeline view"
+                                                  ToolTip.Tip="Clicking a log entry centres both timelines on it, even when the playhead view is locked."/>
+                                        <CheckBox x:Name="HideLogChromeChk" Content="Hide buttons + search (more room)"
+                                                  ToolTip.Tip="Collapse the Auto-pause / lock / Copy-all buttons, the search bar and the clip label to give the log text more room. The ⋮ menu stays."/>
+                                        <Border Height="1" Background="#26262F" Margin="0,2"/>
+                                        <!-- on-screen timer sync (re-sync points / piecewise offset) -->
+                                        <TextBlock Text="On-screen timer sync" Foreground="#BFD2F2" FontWeight="SemiBold" FontSize="12"/>
+                                        <TextBlock Foreground="#7E7E8C" FontSize="10" TextWrapping="Wrap"
+                                                   Text="At the current frame, type what the on-screen timer reads and Sync. If the timer pauses then resumes, drop another sync point — times after it self-correct."/>
+                                        <Grid ColumnDefinitions="*,Auto,Auto">
+                                            <TextBox x:Name="OffsetInput" Grid.Column="0" Watermark="H:MM:SS" FontFamily="Consolas" Height="28" Padding="6,2"/>
+                                            <Button x:Name="OffsetSetBtn" Grid.Column="1" Content="Sync" Focusable="False" Margin="4,0,0,0"
+                                                    ToolTip.Tip="Add a sync point: anchor the current playhead to the timer value you typed."/>
+                                            <Button x:Name="OffsetClearBtn" Grid.Column="2" Content="Clear" Focusable="False" Margin="4,0,0,0"
+                                                    ToolTip.Tip="Remove all sync points."/>
+                                        </Grid>
+                                        <TextBlock x:Name="OffsetStatus" Text="No sync points — timestamps match the video clock."
+                                                   Foreground="#9A9AA8" FontSize="11" TextWrapping="Wrap"/>
+                                        <StackPanel x:Name="SyncPointsPanel" Spacing="1"/>
+                                    </StackPanel>
+                                    </ScrollViewer>
+                                </Flyout>
+                            </Button.Flyout>
+                        </Button>
+                    </Grid>
+                    <Border DockPanel.Dock="Top" Height="1" Background="#26262F" Margin="0,2"/>
+
+                    <!-- search the logs: prev/next match + clear, inside the box -->
+                    <Grid x:Name="LogSearchRow" DockPanel.Dock="Top" Margin="8,4,8,4">
+                        <TextBox x:Name="LogSearchBox" Height="28" Padding="6,2" FontSize="12"
+                                 VerticalContentAlignment="Center" Watermark="Search logs…">
+                            <TextBox.InnerRightContent>
+                                <StackPanel Orientation="Horizontal" Spacing="1" VerticalAlignment="Center" Margin="0,0,2,0">
+                                    <TextBlock x:Name="LogSearchCount" Text="" Foreground="#9A9AA8" FontSize="11"
+                                               VerticalAlignment="Center" Margin="2,0,4,0"/>
+                                    <Button x:Name="LogSearchPrevBtn" Classes="searchBtn" Content="▲" Focusable="False" ToolTip.Tip="Previous match"/>
+                                    <Button x:Name="LogSearchNextBtn" Classes="searchBtn" Content="▼" Focusable="False" ToolTip.Tip="Next match"/>
+                                    <Button x:Name="LogSearchClearBtn" Classes="searchBtn" Content="✕" Focusable="False" ToolTip.Tip="Clear search"/>
+                                </StackPanel>
+                            </TextBox.InnerRightContent>
+                        </TextBox>
+                    </Grid>
+
+                    <!-- current clip/folder under the playhead -->
+                    <Border x:Name="CurrentFolderBorder" DockPanel.Dock="Top" Background="#1B1B27" Margin="8,0,8,4" Padding="8,4" CornerRadius="3">
+                        <TextBlock x:Name="CurrentFolderText" Text="—" Foreground="#BFD2F2" FontSize="12"
+                                   FontWeight="SemiBold" TextTrimming="CharacterEllipsis"
+                                   ToolTip.Tip="The clip the playhead is currently in."/>
+                    </Border>
+
+                    <!-- entry input pinned to the BOTTOM of the tab -->
+                    <StackPanel DockPanel.Dock="Bottom" Margin="8,4,8,8">
+                        <TextBlock x:Name="CapsIndicator" Foreground="#E0B050" FontSize="11" FontWeight="SemiBold"
+                                   Margin="2,0,0,2" Text="⇪ CAPS: ON" IsVisible="False"/>
+                        <StackPanel x:Name="DictationStatusRow" Orientation="Horizontal" Spacing="6" Margin="2,0,0,2" IsVisible="False">
+                            <TextBlock x:Name="DictationStatus" Foreground="#E0405A" FontSize="11" VerticalAlignment="Center" Text=""/>
+                            <Button x:Name="DictationDismissBtn" Classes="searchBtn" Content="✕" Focusable="False" ToolTip.Tip="Dismiss"/>
+                        </StackPanel>
+                        <TextBlock x:Name="PendingHint" Foreground="#5A5A66" FontSize="11" Margin="2,0,0,3" Text=""/>
+                        <Grid>
+                            <TextBox x:Name="EntryInput" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="72" MaxHeight="160"
+                                     VerticalContentAlignment="Top" Padding="6,6,36,6"
+                                     Watermark="Type what happened — Enter to log, Shift+Enter for a new line…"/>
+                            <!-- red squiggle spell-check overlay, positioned exactly over the text box -->
+                            <ctrl:SpellCheckAdorner x:Name="SpellAdorner" IsHitTestVisible="False"/>
+                            <!-- dictation toggle (mic), floating in the box's top-right corner (clear of the
+                                 text thanks to the box's right padding) -->
+                            <ToggleButton x:Name="MicBtn" Classes="mic" Content="🎤" Focusable="False"
+                                          Width="28" Height="24" Padding="0" FontSize="13"
+                                          HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                                          HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,4,4,0"
+                                          ToolTip.Tip="Dictate (hotkey D): records your mic, then transcribes it into a log in the background."/>
+                        </Grid>
+                    </StackPanel>
+
+                    <Grid>
+                    <ScrollViewer x:Name="EntriesScroller" Margin="8,2,6,4" VerticalScrollBarVisibility="Auto">
+                        <ItemsControl x:Name="GroupsList">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="models:ClipGroup">
+                                    <StackPanel Margin="0,0,0,8">
+                                        <Border Background="#1B1B27" Padding="6,4" CornerRadius="3" Margin="0,0,0,2">
+                                            <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+                                                <Button Grid.Column="0" Content="{Binding ToggleGlyph}" Focusable="False"
+                                                        FontSize="10" Padding="6,2" Background="Transparent"
+                                                        BorderThickness="0" Foreground="#BFD2F2"
+                                                        Click="OnToggleGroupClick" ToolTip.Tip="Collapse / expand this clip's logs"/>
+                                                <TextBlock Grid.Column="1" Text="{Binding Name}" Foreground="#BFD2F2"
+                                                           FontWeight="SemiBold" FontSize="12"
+                                                           VerticalAlignment="Center" Margin="4,0,0,0"
+                                                           TextTrimming="CharacterEllipsis"/>
+                                                <Button Grid.Column="2" Content="☑" Focusable="False" FontSize="12"
+                                                        Padding="6,2" Margin="0,0,4,0" Click="OnToggleGroupCopiedClick"
+                                                        ToolTip.Tip="Toggle copied (strikethrough) for every entry in this clip"/>
+                                                <Button Grid.Column="3" Content="⧉ Copy" Focusable="False" FontSize="11"
+                                                        Padding="6,2" Click="OnCopyGroupClick"
+                                                        ToolTip.Tip="Copy this folder's name and all its entries to the clipboard"/>
+                                            </Grid>
+                                        </Border>
+                                        <ItemsControl ItemsSource="{Binding Entries}" Margin="14,0,0,0"
+                                                      IsVisible="{Binding IsExpanded}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate x:DataType="models:LogEntry">
+                                                    <Border Background="{Binding RowBackground}" CornerRadius="4" Margin="0,0,0,4" Padding="8,6">
+                                                        <Grid>
+                                                            <!-- View mode -->
+                                                            <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto,Auto,Auto,Auto"
+                                                                  Background="Transparent" Cursor="Hand"
+                                                                  PointerPressed="OnEntryRowClick"
+                                                                  ToolTip.Tip="Click to jump here. Right-click to colour."
+                                                                  IsVisible="{Binding IsNotEditing}">
+                                                                <TextBlock Grid.Column="0" Text="{Binding DisplayTimecode}" Foreground="#8CE6A0"
+                                                                           FontFamily="Consolas" FontSize="12" VerticalAlignment="Top" Margin="0,1,8,0"
+                                                                           Opacity="{Binding RowOpacity}" TextDecorations="{Binding Strike}"/>
+                                                                <TextBlock Grid.Column="1" Text="{Binding Text}" Foreground="#E2E2EA"
+                                                                           FontSize="12" TextWrapping="Wrap"
+                                                                           Opacity="{Binding RowOpacity}" TextDecorations="{Binding Strike}"/>
+                                                                <Button Grid.Column="2" Content="⎘" Focusable="False" FontSize="12"
+                                                                        Click="OnSplitEntryClick" VerticalAlignment="Top" Margin="6,0,0,0"
+                                                                        Padding="6,2" IsVisible="{Binding IsMerged}"
+                                                                        ToolTip.Tip="Split this merged log back into separate logs"/>
+                                                                <Button Grid.Column="3" Content="⇅" Focusable="False" FontSize="12"
+                                                                        VerticalAlignment="Top" Margin="4,0,0,0" Padding="6,2"
+                                                                        Click="OnMergeMenuClick"
+                                                                        ToolTip.Tip="Merge with the log above or below"/>
+                                                                <Button Grid.Column="4" Content="{Binding CopyToggleGlyph}" Focusable="False" FontSize="12"
+                                                                        Click="OnToggleEntryCopiedClick" VerticalAlignment="Top" Margin="4,0,0,0"
+                                                                        Padding="6,2" ToolTip.Tip="Mark this entry as copied / not copied (strikethrough)"/>
+                                                                <Button Grid.Column="5" Content="⧉" Focusable="False" FontSize="12"
+                                                                        Click="OnCopyEntryClick" VerticalAlignment="Top" Margin="4,0,0,0"
+                                                                        Padding="6,2" ToolTip.Tip="Copy this entry"/>
+                                                                <Button Grid.Column="6" Content="✎" Focusable="False" FontSize="12"
+                                                                        Click="OnEditEntryClick" VerticalAlignment="Top" Margin="4,0,0,0"
+                                                                        Padding="6,2" ToolTip.Tip="Edit entry"/>
+                                                                <Button Grid.Column="7" Content="✕" Focusable="False" FontSize="12"
+                                                                        Click="OnDeleteEntryClick" VerticalAlignment="Top" Margin="4,0,0,0"
+                                                                        Padding="6,2" ToolTip.Tip="Delete entry"/>
+                                                            </Grid>
+                                                            <!-- Edit mode -->
+                                                            <Grid ColumnDefinitions="Auto,*,Auto,Auto"
+                                                                  IsVisible="{Binding IsEditing}">
+                                                                <TextBox Grid.Column="0" Tag="editTime" Text="{Binding DisplayEditable}"
+                                                                         FontFamily="Consolas" FontSize="12" Width="86" Margin="0,0,6,0"
+                                                                         KeyDown="OnEditTextBoxKeyDown"/>
+                                                                <TextBox Grid.Column="1" Tag="editText" Text="{Binding Text, Mode=TwoWay}"
+                                                                         FontSize="12" TextWrapping="Wrap"
+                                                                         KeyDown="OnEditTextBoxKeyDown"/>
+                                                                <Button Grid.Column="2" Content="✓" Focusable="False" FontSize="12"
+                                                                        Click="OnCommitEditClick" Margin="6,0,0,0" Padding="6,2"
+                                                                        ToolTip.Tip="Save"/>
+                                                                <Button Grid.Column="3" Content="↶" Focusable="False" FontSize="12"
+                                                                        Click="OnCancelEditClick" Margin="4,0,0,0" Padding="6,2"
+                                                                        ToolTip.Tip="Cancel"/>
+                                                            </Grid>
+                                                        </Grid>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                    <!-- discrete log playhead: a thin horizontal line that snaps to the log/folder
+                         nearest the current playback time (positioned from code-behind). -->
+                    <Border x:Name="LogPlayheadLine" Height="2" Background="#E0405A" Opacity="0.95"
+                            VerticalAlignment="Top" HorizontalAlignment="Stretch"
+                            Margin="8,0,6,0" IsHitTestVisible="False" IsVisible="False"/>
+                    </Grid>
+                </DockPanel>
+
+                <!-- (divider is the GridSplitter in column 1 above) -->
+
+                <!-- Auto transcript: 3 columns, one per audio track. Click a header to focus that
+                     column and collapse the others. -->
+                <DockPanel Grid.Column="2">
+                    <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto,Auto,Auto,Auto,Auto" Margin="10,10,8,4">
+                        <TextBlock Text="Transcript" Foreground="#FFFFFF" FontWeight="SemiBold"
+                                   FontSize="14" VerticalAlignment="Center"/>
+                        <ToggleButton x:Name="TranscriptCenterLockBtn" Grid.Column="1" Classes="hdrIcon" Content="🎯" Focusable="False"
+                                      Margin="0,0,6,0"
+                                      ToolTip.Tip="Lock the playhead to the centre of the transcript — scrolling follows playback."/>
+                        <ToggleButton x:Name="ScrollLockBtn" Grid.Column="2" Classes="hdrIcon" Content="🔒" Focusable="False"
+                                      Margin="0,0,6,0"
+                                      ToolTip.Tip="Lock zoom between the video + transcript timelines (Ctrl+L)."/>
+                        <!-- pause/stop light up only while generating (Generate greys out then) -->
+                        <StackPanel x:Name="TranscribeControls" Grid.Column="3" Orientation="Horizontal" Spacing="4"
+                                    IsVisible="False" Margin="0,0,6,0" VerticalAlignment="Center">
+                            <Button x:Name="PauseTranscriptBtn" Classes="hdrIcon" Content="⏸" Focusable="False" MinWidth="30"
+                                    ToolTip.Tip="Pause / resume transcription"/>
+                            <Button x:Name="StopTranscriptBtn" Classes="hdrIcon" Content="⏹" Focusable="False" MinWidth="30"
+                                    ToolTip.Tip="Stop transcription (keeps what's already done)"/>
+                        </StackPanel>
+                        <Button x:Name="GenerateBtn" Grid.Column="4" Classes="hdrText" Content="Generate" Focusable="False" Margin="0,0,6,0"/>
+                        <Button x:Name="LevelsBtn" Grid.Column="5" Classes="hdrIcon" Content="⋮" Focusable="False"
+                                ToolTip.Tip="Transcript options: per-track silence level, clear transcript">
+                            <Button.Flyout>
+                                <Flyout Placement="BottomEdgeAlignedRight">
+                                    <StackPanel Spacing="8" Width="260">
+                                        <StackPanel x:Name="LevelsPanel" Spacing="2"/>
+                                        <Border Height="1" Background="#26262F"/>
+                                        <Button x:Name="ClearTranscriptBtn" Content="Clear transcript" HorizontalAlignment="Stretch"
+                                                ToolTip.Tip="Delete the current transcript (and its cache) so it can be regenerated from scratch."/>
+                                    </StackPanel>
+                                </Flyout>
+                            </Button.Flyout>
+                        </Button>
+                    </Grid>
+                    <!-- Search the transcript -->
+                    <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto,Auto,Auto" Margin="10,0,8,4">
+                        <TextBox x:Name="TranscriptSearchBox" Grid.Column="0" Height="28" Padding="6,2" FontSize="12"
+                                 VerticalContentAlignment="Center" Watermark="Search transcript…">
+                            <TextBox.InnerRightContent>
+                                <Button x:Name="TranscriptSearchClearBtn" Classes="searchBtn" Content="✕" Focusable="False"
+                                        Margin="0,0,2,0" ToolTip.Tip="Clear search"/>
+                            </TextBox.InnerRightContent>
+                        </TextBox>
+                        <TextBlock x:Name="SearchCountLabel" Grid.Column="1" Text="" Foreground="#9A9AA8" FontSize="11"
+                                   VerticalAlignment="Center" Margin="8,0,6,0"/>
+                        <Button x:Name="SearchPrevBtn" Grid.Column="2" Content="◀" Focusable="False" FontSize="11"
+                                Padding="6,2" Margin="0,0,4,0" ToolTip.Tip="Previous match"/>
+                        <Button x:Name="SearchNextBtn" Grid.Column="3" Content="▶" Focusable="False" FontSize="11"
+                                Padding="6,2" ToolTip.Tip="Next match"/>
+                    </Grid>
+                    <!-- Per-track Pause + Level controls, one cell per audio track, populated in code.
+                         Sits directly above the track headers drawn inside the transcript timeline. -->
+                    <Grid x:Name="TrackControlsStrip" DockPanel.Dock="Top" Height="32" Margin="4,2,4,2"/>
+                    <Border DockPanel.Dock="Top" Height="1" Background="#26262F" Margin="0,3,0,3"/>
+                    <TextBlock x:Name="TranscriptStatus" DockPanel.Dock="Top" Margin="10,4,10,2"
+                               Foreground="#7E7E8C" FontSize="11" TextWrapping="Wrap"
+                               Text="Transcribes every audio track on the GPU. Click Generate to start."/>
+                    <ProgressBar x:Name="TranscriptProgress" DockPanel.Dock="Top" Height="4" Minimum="0" Maximum="1"
+                                 IsVisible="False" Margin="10,2,10,4"/>
+                    <!-- Time-positioned transcript: one horizontal lane per audio track, segments
+                         placed at their actual start time on the global EDL timeline. Empty space
+                         where nothing is said. Alt+scroll to zoom, scroll to pan, click a block to
+                         seek. -->
+                    <ctrl:TranscriptTimelineControl x:Name="TranscriptTimeline"
+                                                    HorizontalAlignment="Stretch"
+                                                    VerticalAlignment="Stretch"/>
+                </DockPanel>
+            </Grid>
+        </Grid>
+
+        <!-- Timeline: track headers | lanes. AllowDrop on the Border + Grid (not just the Timeline control) so
+             OS file drops bubble down to the Timeline — Avalonia blocks drops at any ancestor lacking AllowDrop. -->
+        <Border Grid.Row="2" BorderBrush="#26262F" BorderThickness="0,1,0,1" Background="#0E0E13" DragDrop.AllowDrop="True">
+            <Grid ColumnDefinitions="186,*" DragDrop.AllowDrop="True">
+                <StackPanel x:Name="TrackHeaders" Grid.Column="0" Background="#13131A"/>
+                <ctrl:TimelineControl x:Name="Timeline" Grid.Column="1"/>
+            </Grid>
+        </Border>
+
+        <!-- Transport -->
+        <Grid Grid.Row="3" Background="#16161D" ColumnDefinitions="Auto,Auto,Auto,Auto,Auto,*,Auto">
+            <Button x:Name="PlayBtn" Focusable="False" Grid.Column="0" Margin="8,8,8,8" Content="▶ / ❚❚  (Space)" MinWidth="64"/>
+            <ToggleButton x:Name="SkipPreviewBtn" Focusable="False" Grid.Column="1" Margin="0,8,4,8"
+                          Content="┊┊" MinWidth="32"
+                          ToolTip.Tip="Show faint guide lines where the playhead will land if you skip ± the skip distance (← / →)."/>
+            <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="0,8,10,8">
+                <ToggleButton x:Name="VideoCenterLockBtn" Focusable="False" Content="🎯" MinWidth="32"
+                              ToolTip.Tip="Lock the playhead to the centre of the video timeline — scrolling follows playback."/>
+                <ToggleButton x:Name="VideoKeepVisibleBtn" Focusable="False" Content="👁" MinWidth="32" Margin="4,0,0,0"
+                              ToolTip.Tip="Keep the playhead on screen: the view stays where you put it, but jumps back to the playhead whenever it scrolls out of sight (looser than 🎯 centre-lock)."/>
+                <Button x:Name="TimelineMenuBtn" Classes="hdrIcon" Focusable="False" Content="⋮" MinWidth="32" Margin="4,0,0,0"
+                        ToolTip.Tip="Timeline options">
+                    <Button.Flyout>
+                        <Flyout Placement="TopEdgeAlignedLeft">
+                            <StackPanel Spacing="8" Width="260">
+                                <TextBlock Text="Footage order" Foreground="#BFD2F2" FontWeight="SemiBold" FontSize="12"/>
+                                <Button x:Name="OrderChronologicallyBtn" Content="Order chronologically…" HorizontalAlignment="Stretch"
+                                        ToolTip.Tip="Sort every clip into the order it was recorded."/>
+                                <TextBlock Text="Reorders the whole timeline by recording time. You'll confirm first; Ctrl+Z undoes it."
+                                           Foreground="#7E7E8C" FontSize="10" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Flyout>
+                    </Button.Flyout>
+                </Button>
+            </StackPanel>
+            <TextBlock x:Name="PosText" Grid.Column="3" VerticalAlignment="Center"
+                       Foreground="#D0D0DA" FontFamily="Consolas,monospace" Text="0:00:00.000"/>
+            <TextBlock x:Name="DurText" Grid.Column="4" VerticalAlignment="Center" Margin="6,0,0,0"
+                       Foreground="#9A9AA8" FontFamily="Consolas,monospace" Text="/ 0:00:00"/>
+            <TextBlock x:Name="PercentText" Grid.Column="5" VerticalAlignment="Center" HorizontalAlignment="Left"
+                       Margin="14,0,0,0" Foreground="#8CE6A0" FontFamily="Consolas,monospace" FontSize="12" Text=""/>
+            <TextBlock x:Name="HotkeyLegend" Grid.Column="5" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="60,0,12,0"
+                       Foreground="#6A6A78" FontSize="11" TextTrimming="CharacterEllipsis"/>
+            <ComboBox x:Name="SpeedBox" Grid.Column="6" Margin="0,8,8,8" MinWidth="86" VerticalAlignment="Center"/>
+        </Grid>
+
+        <!-- Loading splash. An in-window overlay (same grid row as the preview), NOT a Popup: a Popup is its
+             own top-level window, so it kept floating over other apps when the user tabbed out. The video is
+             composited by Avalonia now, so an overlay draws above it fine. -->
+        <Border Grid.Row="1" x:Name="SplashOverlay" IsVisible="False" ZIndex="100" Background="#B00A0A0F"
+                IsHitTestVisible="False">
+            <Border Background="#F00E0E13" BorderBrush="#274050" BorderThickness="2" CornerRadius="16"
+                    Padding="46,34" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <StackPanel Spacing="14" HorizontalAlignment="Center">
+                    <Image Source="/Assets/icon.png" Width="72" Height="72" HorizontalAlignment="Center"/>
+                    <TextBlock Text="Footage Reviewer" Foreground="#FFFFFF" FontSize="20" FontWeight="SemiBold"
+                               HorizontalAlignment="Center"/>
+                    <TextBlock x:Name="SplashProject" Foreground="#BFD2F2" FontSize="14"
+                               HorizontalAlignment="Center" MaxWidth="420" TextTrimming="CharacterEllipsis"/>
+                    <TextBlock x:Name="SplashStatus" Foreground="#9A9AA8" FontSize="12"
+                               HorizontalAlignment="Center" MaxWidth="420" TextWrapping="Wrap"
+                               TextAlignment="Center" Text="Starting up…"/>
+                    <ProgressBar x:Name="SplashBar" Width="300" Height="4" IsIndeterminate="True"/>
+                </StackPanel>
+            </Border>
+        </Border>
+
+        <!-- Save confirmation toast: same in-window treatment. Big + centred (nudged up), fades out. -->
+        <Border Grid.Row="1" x:Name="SaveToastOverlay" IsVisible="False" ZIndex="101" IsHitTestVisible="False"
+                HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,320">
+            <Border x:Name="SaveToastBorder" Background="#F21B2A38" BorderBrush="#8CE6A0" BorderThickness="2"
+                    CornerRadius="14" Padding="34,24">
+                <Border.Transitions>
+                    <Transitions>
+                        <DoubleTransition Property="Opacity" Duration="0:0:0.40"/>
+                    </Transitions>
+                </Border.Transitions>
+                <StackPanel Orientation="Horizontal" Spacing="18">
+                    <TextBlock x:Name="SaveToastIcon" Text="💾" FontSize="48" VerticalAlignment="Center"/>
+                    <TextBlock x:Name="SaveToastText" Text="Saved" Foreground="#FFFFFF" FontSize="26"
+                               FontWeight="SemiBold" VerticalAlignment="Center"/>
+                </StackPanel>
+            </Border>
+        </Border>
+    </Grid>
+</Window>

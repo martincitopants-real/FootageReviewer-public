@@ -1,0 +1,31 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="FootageReviewer.App.Views.OrderFootageWindow"
+        Width="520" SizeToContent="Height"
+        Background="#0F0F14"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        Title="Order footage chronologically">
+    <StackPanel Margin="16" Spacing="10">
+        <TextBlock Text="Order footage chronologically" Foreground="#FFFFFF" FontSize="18" FontWeight="SemiBold"/>
+        <TextBlock x:Name="SummaryText" Foreground="#9A9AA8" FontSize="12" TextWrapping="Wrap"
+                   Text="Reorder every clip into recording order. Your logs, sync points and playhead follow their clip, and Ctrl+Z undoes this."/>
+        <Border Background="#15151B" CornerRadius="4" Padding="12">
+            <StackPanel Spacing="6">
+                <TextBlock Text="Sort by" Foreground="#BFD2F2" FontSize="12" FontWeight="SemiBold"/>
+                <RadioButton x:Name="FilenameRadio" GroupName="basis" IsChecked="True" Foreground="#E2E2EA"
+                             Content="Recording time in the filename (OBS, e.g. 2026-05-21 16-47-18)"/>
+                <TextBlock Text="Falls back to the file's modified date if a clip's name has no timestamp."
+                           Foreground="#7E7E8C" FontSize="10" TextWrapping="Wrap" Margin="24,0,0,0"/>
+                <RadioButton x:Name="ModifiedRadio" GroupName="basis" Foreground="#E2E2EA"
+                             Content="File modified date"/>
+                <RadioButton x:Name="CreatedRadio" GroupName="basis" Foreground="#E2E2EA"
+                             Content="File created date"/>
+            </StackPanel>
+        </Border>
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8" Margin="0,4,0,0">
+            <Button x:Name="CancelBtn" Content="Cancel" Focusable="False"/>
+            <Button x:Name="OrderBtn" Content="Order clips" Background="#274050" Foreground="#FFFFFF" Focusable="False"/>
+        </StackPanel>
+    </StackPanel>
+</Window>

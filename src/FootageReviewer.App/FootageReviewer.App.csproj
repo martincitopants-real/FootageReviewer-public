@@ -1,0 +1,92 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <!-- Needed to read MpvContext.Ctx (mpv_handle*) for the direct property-read path. -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <LangVersion>latest</LangVersion>
+    <!-- Win32 manifest + .ico are Windows-only build inputs; they break/warn on other RIDs. -->
+    <ApplicationManifest Condition="$([MSBuild]::IsOSPlatform('Windows'))">app.manifest</ApplicationManifest>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+    <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
+    <ApplicationIcon Condition="$([MSBuild]::IsOSPlatform('Windows'))">Assets\icon.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <AvaloniaResource Include="Assets\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="11.3.17" />
+    <PackageReference Include="Avalonia.Desktop" Version="11.3.17" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.17" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.17" />
+    <PackageReference Include="Avalonia.Diagnostics" Version="11.3.17">
+      <IncludeAssets Condition="'$(Configuration)' != 'Debug'">None</IncludeAssets>
+      <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.1" />
+    <PackageReference Include="HanumanInstitute.LibMpv.Avalonia" Version="0.9.1" />
+    <PackageReference Include="WeCantSpell.Hunspell" Version="7.0.1" />
+  </ItemGroup>
+
+  <!-- macOS: LibMpv 0.9.1's FunctionResolverFactory falls through to its LINUX resolver on macOS, so it
+       dlopen's "<appdir>/libmpv.so.2" — the Linux soname, not a .dylib name. Homebrew's dylib is
+       therefore copied in under exactly that filename (dlopen doesn't care about the extension).
+       Homebrew keeps it in /opt/homebrew/lib (Apple silicon) or /usr/local/lib (Intel).
+       Install it with "brew install mpv". -->
+  <ItemGroup Condition="$([MSBuild]::IsOSPlatform('OSX'))">
+    <None Include="/opt/homebrew/lib/libmpv.2.dylib" Condition="Exists('/opt/homebrew/lib/libmpv.2.dylib')">
+      <Link>libmpv.so.2</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </None>
+    <None Include="/usr/local/lib/libmpv.2.dylib" Condition="!Exists('/opt/homebrew/lib/libmpv.2.dylib') And Exists('/usr/local/lib/libmpv.2.dylib')">
+      <Link>libmpv.so.2</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </None>
+  </ItemGroup>
+
+  <!-- Spell-check dictionary (wooorm/dictionaries "en", MIT AND BSD). Embedded in the assembly so it
+       survives the single-file publish (a loose Dictionaries folder would not be found). -->
+  <ItemGroup>
+    <EmbeddedResource Include="Dictionaries\en_US.dic">
+      <LogicalName>FootageReviewer.App.Dictionaries.en_US.dic</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Dictionaries\en_US.aff">
+      <LogicalName>FootageReviewer.App.Dictionaries.en_US.aff</LogicalName>
+    </EmbeddedResource>
+  </ItemGroup>
+
+  <!-- Native libmpv (drop the matching libmpv-2.dll into native\win-x64). Kept as a LOOSE file beside
+       the exe (ExcludeFromSingleFile) so the LibMpv function resolver LoadLibrary's it by name, and so
+       the single-file exe stays small instead of swallowing the 100+ MB DLL. -->
+  <ItemGroup>
+    <None Include="..\..\native\win-x64\libmpv-2.dll" Condition="$([MSBuild]::IsOSPlatform('Windows')) And Exists('..\..\native\win-x64\libmpv-2.dll')">
+      <Link>libmpv-2.dll</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+    </None>
+  </ItemGroup>
+
+  <!-- ffmpeg / ffprobe (static win64 builds, dropped into native\win-x64). Published as LOOSE files
+       beside the exe (ExcludeFromSingleFile) so ToolPath finds them next to the single-file exe
+       (candidate #1) instead of them being bundled + self-extracted to a temp dir BaseDirectory never
+       points at. Dev/Debug runs resolve them straight from native\win-x64, so we skip
+       CopyToOutputDirectory to avoid copying ~400 MB into every build output. -->
+  <ItemGroup>
+    <None Include="..\..\native\win-x64\ffmpeg.exe" Condition="$([MSBuild]::IsOSPlatform('Windows')) And Exists('..\..\native\win-x64\ffmpeg.exe')">
+      <Link>ffmpeg.exe</Link>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+    </None>
+    <None Include="..\..\native\win-x64\ffprobe.exe" Condition="$([MSBuild]::IsOSPlatform('Windows')) And Exists('..\..\native\win-x64\ffprobe.exe')">
+      <Link>ffprobe.exe</Link>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+    </None>
+  </ItemGroup>
+</Project>

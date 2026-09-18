@@ -1,0 +1,50 @@
+# ---- .NET build output ----
+bin/
+obj/
+*.user
+*.suo
+
+# ---- Visual Studio cache ----
+.vs/
+
+# ---- Published single-file build (144 MB exe + native dlls) ----
+dist/
+
+# ---- Large third-party native binaries (ffmpeg/ffprobe etc.) ----
+# Re-fetch these locally; they're too big for the repo.
+native/win-x64/
+
+# ---- Scratch / demo media ----
+.tmp/
+
+# ---- User data: projects + rotating backups ----
+*.frproj
+*.backups/
+
+# ---- Python sidecar caches (if any get created under native/whisper) ----
+native/whisper/__pycache__/
+native/whisper/.venv/
+
+# ---- Per-machine whisper engine config (absolute python path). Copy the *.example.json next to it. ----
+native/whisper/engine.json
+native/whisper/engine.macos.json
+native/whisper/engine.linux.json
+
+# ---- Icon source PNGs (source art only; Assets/icon.png IS shipped — the launcher loads it) ----
+/icon.png
+/icon 2.png
+/icon 3.png
+
+# ---- OS noise ----
+Thumbs.db
+desktop.ini
+
+# macOS folder metadata
+.DS_Store
+
+# ---- Local secrets and diagnostic files ----
+.env
+.env.*
+!.env.example
+*.log
+*.dmp

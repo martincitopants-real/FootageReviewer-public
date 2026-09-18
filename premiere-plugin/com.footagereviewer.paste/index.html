@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>FootageReviewer Paste</title>
+  <style>
+    body { font-family: "Segoe UI", sans-serif; background: #1e1e22; color: #e2e2ea;
+           margin: 0; padding: 12px; font-size: 12px; user-select: none; }
+    h1 { font-size: 13px; font-weight: 600; margin: 0 0 8px; color: #bfd2f2; }
+    button { width: 100%; padding: 9px; margin-bottom: 6px; font-size: 12px; cursor: pointer;
+             background: #274050; color: #fff; border: 1px solid #3a5a70; border-radius: 3px; }
+    button:hover { background: #325267; }
+    button.secondary { background: #24242c; border-color: #3a3a46; }
+    label { display: flex; align-items: center; gap: 6px; margin: 8px 0 4px; color: #9a9aa8; }
+    #status { margin-top: 8px; font-size: 11px; color: #9a9aa8; min-height: 30px; line-height: 1.4; }
+    #status.ok { color: #8ce6a0; }
+    #status.err { color: #ff7676; }
+  </style>
+</head>
+<body>
+  <h1>FootageReviewer</h1>
+  <button id="atPlayhead">Paste section at playhead</button>
+  <button id="atEnd" class="secondary">Append to end of V1</button>
+  <label><input type="checkbox" id="auto"> Auto-paste when I copy in FootageReviewer</label>
+  <div id="status">Press <b>C</b> on a section in FootageReviewer, then click a button here.</div>
+
+  <script src="./js/CSInterface.js"></script>
+  <script>
+    var cs = new CSInterface();
+
+    // FootageReviewer writes the handoff next to the XML it generates.
+    var HANDOFF = cs.getSystemPath(SystemPath.USER_DATA)
+        .replace(/\/Roaming$/i, '/Local') + '/FootageReviewer/cache/premiere/handoff.json';
+
+    function esc(s) { return String(s).replace(/\\/g, '\\\\').replace(/"/g, '\\"'); }
+    function setStatus(msg, cls) {
+      var el = document.getElementById('status');
+      el.textContent = msg;
+      el.className = cls || '';
+    }
+
+    function paste(mode) {
+      cs.evalScript('frPasteSection("' + esc(HANDOFF) + '", "' + mode + '")', function (res) {
+        res = String(res || '');
+        var bar = res.indexOf('|');
+        var kind = bar > 0 ? res.substring(0, bar) : 'ERR';
+        var msg  = bar > 0 ? res.substring(bar + 1) : (res || 'No response from Premiere.');
+        setStatus(msg, kind === 'OK' ? 'ok' : 'err');
+      });
+    }
+
+    document.getElementById('atPlayhead').addEventListener('click', function () { paste('playhead'); });
+    document.getElementById('atEnd').addEventListener('click', function () { paste('end'); });
+
+    // Optional watcher: poll the handoff timestamp and paste as soon as a new section is copied.
+    var lastStamp = null;
+    setInterval(function () {
+      if (!document.getElementById('auto').checked) return;
+      cs.evalScript('frHandoffStamp("' + esc(HANDOFF) + '")', function (stamp) {
+        stamp = String(stamp || '');
+        if (!stamp) return;
+        if (lastStamp === null) { lastStamp = stamp; return; } // don't fire on the first look
+        if (stamp !== lastStamp) { lastStamp = stamp; paste('playhead'); }
+      });
+    }, 1000);
+  </script>
+</body>
+</html>

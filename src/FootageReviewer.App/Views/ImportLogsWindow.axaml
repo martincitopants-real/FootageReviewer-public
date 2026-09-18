@@ -1,0 +1,32 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="FootageReviewer.App.Views.ImportLogsWindow"
+        Width="580" Height="560"
+        Background="#0F0F14"
+        WindowStartupLocation="CenterOwner"
+        Title="Import logs">
+    <Grid RowDefinitions="Auto,Auto,*,Auto,Auto" Margin="16">
+        <TextBlock Grid.Row="0" Text="Import logs" Foreground="#FFFFFF" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,8"/>
+        <TextBlock Grid.Row="1" Foreground="#9A9AA8" FontSize="11" TextWrapping="Wrap" Margin="0,0,0,8"
+                   Text="Paste timestamped log lines — each line is a timecode then the text, e.g. &quot;54:17:49&#x9;made the donut&quot; or &quot;8:00 meet the dealer&quot;. Lines with no leading timecode are skipped (headers) or joined to the line above (wrapped text). Imported logs are added to your current ones."/>
+        <TextBox Grid.Row="2" x:Name="PasteBox" AcceptsReturn="True" TextWrapping="NoWrap"
+                 FontFamily="Consolas,monospace" FontSize="12" VerticalContentAlignment="Top"
+                 Watermark="Paste your logs here…"
+                 ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.VerticalScrollBarVisibility="Auto"/>
+        <Border Grid.Row="3" x:Name="AmbiguityPanel" IsVisible="False" Background="#15151B" CornerRadius="4"
+                Padding="12" Margin="0,8,0,0">
+            <StackPanel Spacing="6">
+                <TextBlock Foreground="#E0B050" FontSize="12" FontWeight="SemiBold" TextWrapping="Wrap"
+                           Text="Two-part timecodes found (like 8:00) — how should they be read?"/>
+                <RadioButton x:Name="HmRadio" GroupName="twopart" Foreground="#E2E2EA"
+                             Content="Hours : minutes   (8:00 = 8h 00m)"/>
+                <RadioButton x:Name="MsRadio" GroupName="twopart" Foreground="#E2E2EA"
+                             Content="Minutes : seconds   (8:00 = 8m 00s)"/>
+            </StackPanel>
+        </Border>
+        <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8" Margin="0,12,0,0">
+            <Button x:Name="CancelBtn" Content="Cancel" Focusable="False"/>
+            <Button x:Name="ImportBtn" Content="Import" Background="#274050" Foreground="#FFFFFF" Focusable="False"/>
+        </StackPanel>
+    </Grid>
+</Window>
