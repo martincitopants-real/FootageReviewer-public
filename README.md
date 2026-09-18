@@ -6,6 +6,12 @@ A fast, keyboard-driven desktop tool for reviewing **dozens of hours** of OBS ga
 
 Built for a specific workflow: OBS recordings with **3 audio tracks** — Track 1 *gameplay* (rarely used), Track 2 *mic*, Track 3 *discord + alerts*.
 
+## Installation
+
+**New to GitHub or coding? Start with the [step-by-step installation guide](INSTALL.md).** It explains what to download, where to put the files, how to launch the app, and how to fix common setup problems. Windows setup is covered first, with a separate Mac section.
+
+There is currently no ready-made installer. The guide uses the included build script to create the app on your computer. Playback and typed notes work without the optional Python transcription setup.
+
 ---
 
 ## What it does
@@ -26,7 +32,7 @@ Built for a specific workflow: OBS recordings with **3 audio tracks** — Track 
   opt-in checkbox. **File ▸ Home** comes back here.
 - **Projects** (`.frproj`) with autosave + rotating versioned backups, recent-projects menu, and rename-in-place.
 
-## Build & run
+## Build & run (for developers)
 
 Requires the **.NET 8 SDK** (Windows). Native `libmpv-2.dll` + `ffmpeg`/`ffprobe` live under `native/win-x64/` (not in the repo — see below); transcription uses a local Python + faster-whisper configured under `native/whisper/`: copy `engine.example.json` to `engine.json` (macOS: `engine.macos.example.json` to `engine.macos.json`) and point `python` at an interpreter with the sidecar's requirements installed. The real `engine*.json` files are git-ignored because they hold a machine-specific absolute path.
 
@@ -38,7 +44,8 @@ dotnet run -c Release --project src/FootageReviewer.App/FootageReviewer.App.cspr
 dotnet publish -c Release -r win-x64 --self-contained false \
   -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true \
   src/FootageReviewer.App/FootageReviewer.App.csproj -o dist
-# then run dist/FootageReviewer.exe  (launcher: "Launch FootageReviewer.cmd")
+# then run dist/FootageReviewer.App.exe
+# "Rebuild dist exe.cmd" also renames it to FootageReviewer.exe for the launcher.
 ```
 
 The repo is **source-only** (`.gitignore` excludes `dist/`, `native/win-x64/`, `bin`/`obj`, `*.frproj`). A clone needs the .NET 8 SDK plus the native libmpv/ffmpeg binaries to run.
